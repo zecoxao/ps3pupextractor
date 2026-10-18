@@ -132,7 +132,7 @@ namespace Ps3PupExtractor
             var list = new List<string>();
             try
             {
-                foreach (string f in Directory.GetFiles(inDir, "*.pup", SearchOption.TopDirectoryOnly))
+                foreach (string f in Directory.GetFiles(inDir, "*.pup", SearchOption.AllDirectories))
                     list.Add(f);
             }
             catch (Exception ex) { MessageBox.Show(this, "Cannot read folder: " + ex.Message); return; }
@@ -150,7 +150,7 @@ namespace Ps3PupExtractor
                     for (int i = 0; i < files.Length; i++)
                     {
                         string f = files[i];
-                        string outDir = Path.Combine(parent, Path.GetFileNameWithoutExtension(f) + "_extracted");
+                        string outDir = UniqueDir(parent, Path.GetFileNameWithoutExtension(f) + "_extracted");
                         Log(string.Format("\n===== [{0}/{1}] {2} =====", i + 1, files.Length, Path.GetFileName(f)));
                         SetStatus(string.Format("Batch {0}/{1}", i + 1, files.Length));
                         try { if (explode) Exploder.Explode(f, outDir, dev, Log); else Pup.Split(f, outDir, verify, Log); ok++; }
@@ -171,6 +171,13 @@ namespace Ps3PupExtractor
                 Done(true);
             }
             catch (Exception ex) { Log("\nERROR: " + ex.Message); Done(false); }
+        }
+
+        static string UniqueDir(string parent, string name)
+        {
+            string p = Path.Combine(parent, name);
+            if (!Directory.Exists(p) || !Directory.EnumerateFileSystemEntries(p).GetEnumerator().MoveNext()) return p;
+            for (int k = 2; ; k++) { string q = Path.Combine(parent, name + "_" + k); if (!Directory.Exists(q)) return q; }
         }
 
         void RunThread(ThreadStart work) { var t = new Thread(work); t.IsBackground = true; t.Start(); }
