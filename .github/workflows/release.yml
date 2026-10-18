@@ -1,0 +1,41 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build GUI (csc, .NET Framework 4.x)
+        shell: pwsh
+        run: |
+          $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          & $csc /nologo /optimize+ /target:winexe /out:ps3pupextractor_gui.exe `
+            /r:System.dll /r:System.Core.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll `
+            Sce.cs Keys.cs Explode.cs Ps3PupExtractorGui.cs
+          if ($LASTEXITCODE -ne 0) { throw "csc failed" }
+
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path ps3pupextractor_gui.exe -DestinationPath ps3pupextractor_gui.zip -Force
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ps3pupextractor_gui
+          path: ps3pupextractor_gui.exe
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ps3pupextractor_gui.exe
+            ps3pupextractor_gui.zip

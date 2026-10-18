@@ -1,0 +1,5 @@
+# build outputs
+ps3pupextractor_gui.exe
+*.pdb
+*.obj
+*.zip
